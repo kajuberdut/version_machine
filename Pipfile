@@ -1,0 +1,18 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+version_machine = {editable = true, path = "."}
+
+[dev-packages]
+flake8 = "*"
+black = "*"
+coverage = "*"
+
+[requires]
+python_version = "3.10"
+
+[pipenv]
+allow_prereleases = true
