@@ -104,19 +104,23 @@ class VersionMachine:
             else {n.name.lower(): 0 for n in self.IncrementType}
         )
 
-    def bump_part(self, version: str) -> str:
-        return str((int(version) + 1))
-
     @property
     def future_version(self) -> str:
         if self.force_version is not None:
             return self.force_version
 
-        target_type = getattr(self.increment_type, "name", self.increment_type).lower()
-        future = {
-            k: self.bump_part(v) if k == target_type else v
-            for k, v in self.current_version_info.items()
-        }
+        future = {}
+        for k, v in self.current_version_info.items():
+            v = int(v)
+            if (o := self.type_ordinal(k)) == (
+                t := self.type_ordinal(self.increment_type)
+            ):
+                future[k] = v + 1
+            elif o > t:
+                future[k] = 0
+            else:
+                future[k] = v
+
         return "{major}.{minor}.{patch}".format(**future)
 
     @property
@@ -126,6 +130,11 @@ class VersionMachine:
     @property
     def future_text(self) -> str:
         return self.text.replace(self.match_text, self.repl)
+
+    def type_ordinal(self, type: str | enum.EnumMeta) -> int:
+        if isinstance(type, str):
+            type = self.IncrementType[type.upper()]
+        return type.value
 
     class IncrementType(enum.Enum):
         MAJOR = 0
