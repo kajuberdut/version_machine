@@ -30,16 +30,11 @@ def check_dirty(warn: bool) -> None:
 current_tag = partial(git_info, "rev-parse", "--short", "HEAD")
 
 
-class MissingSettingsFile(IOError):
-    ...
-
-
-class DirtyFiles(UserWarning):
-    ...
-
-
-class LockedTag(UserWarning):
-    ...
+# fmt: off
+class MissingSettingsFile(IOError): ...
+class DirtyFiles(UserWarning): ...
+class LockedTag(UserWarning): ...
+# fmt: on
 
 
 class Config(UserDict):
@@ -210,8 +205,7 @@ def main(
             LockedTag,
         )
         return
-    if not isinstance(config, Config):
-        config = Config(config=config)
+    config = Config(config=config) if not isinstance(config, Config) else config
     version = None
     for target in config.targets:
         version = version_travel(**target)
