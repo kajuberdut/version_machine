@@ -97,12 +97,25 @@ version_machine can be run with defaults from the command line:
 foo@bar:~$ version_machine path/to/file.py
 ```
 
-The best way to configure behavior is to add entries to pyproject.toml:
+or specify file and the version part to be bumped:
+```console
+foo@bar:~$ version_machine --path "examples/example_version.py" --i MINOR
+```
+
+See version_machine --help for more cli options.
+
+You can configure multiple file entries in pyproject.toml:
 
 ```toml
 [tool.version_machine]
-  path = "version_machine/__version__.py"
-  increment_type = "patch"
+
+    [tool.version_machine.__version__]
+    path = "version_machine/__version__.py"
+    increment = "patch"
+
+    [tool.version_machine.example_version]
+    path = "examples/example_version.py"
+    increment = "major"
 ```
 
 ### Functional use
@@ -116,7 +129,7 @@ from pathlib import Path
 THIS_FILE = Path(__file__)
 example_path = THIS_FILE.parent / "example_version.py" 
 
-version_travel(path=example_path, increment_type="major")
+version_travel(path=example_path, increment="major")
 ```
 
 examples/example_version.py is update by the above code from:

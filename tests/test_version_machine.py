@@ -15,25 +15,25 @@ class TestVersionMachine(TestCase):
         return super().tearDown()
 
     def test_basic_major(self):
-        version_travel(path="", increment_type="MAJOR")
+        version_travel(path="", increment="MAJOR")
         self.mock_open.return_value.write.assert_called_once_with(
             '__version__ = "1.0.0"'
         )
 
     def test_basic_minor(self):
-        version_travel(path="", increment_type="MINOR")
+        version_travel(path="", increment="MINOR")
         self.mock_open.return_value.write.assert_called_once_with(
             '__version__ = "0.1.0"'
         )
 
     def test_basic_patch(self):
-        version_travel(path="", increment_type="PATCH")
+        version_travel(path="", increment="PATCH")
         self.mock_open.return_value.write.assert_called_once_with(
             '__version__ = "0.0.2"'
         )
 
     def test_basic_override(self):
-        version_travel(path="", increment_type="PATCH", override_version="9.9.9")
+        version_travel(path="", increment="PATCH", override_version="9.9.9")
         self.mock_open.return_value.write.assert_called_once_with(
             '__version__ = "9.9.9"'
         )

@@ -1,14 +1,21 @@
 import argparse
 import enum
 import json
+import random
 import re
+import string
 import subprocess
 import sys
 import typing as t
 import warnings
 from collections import UserDict
-from pathlib import Path
 from functools import partial
+from pathlib import Path
+
+
+def random_name(root: str = "", random_chars: int = 5):
+    rand = "".join(random.choice(string.ascii_lowercase) for i in range(random_chars))
+    return f"{root}{rand}"
 
 
 def git_info(*args, git_command="git"):
@@ -75,12 +82,12 @@ class VersionMachine:
     def __init__(
         self,
         text: str,
-        increment_type: str | enum.EnumMeta = None,
+        increment: str | enum.EnumMeta = None,
         config: dict = None,
         force_version: str = None,
     ):
         self.text = text
-        self.increment_type = increment_type
+        self.increment = increment
         self.match = self.extraction_pattern.search(text) or ""
         self.force_version = force_version
 
@@ -107,9 +114,7 @@ class VersionMachine:
         future = {}
         for k, v in self.current_version_info.items():
             v = int(v)
-            if (o := self.type_ordinal(k)) == (
-                t := self.type_ordinal(self.increment_type)
-            ):
+            if (o := self.type_ordinal(k)) == (t := self.type_ordinal(self.increment)):
                 future[k] = v + 1
             elif o > t:
                 future[k] = 0
@@ -135,6 +140,16 @@ class VersionMachine:
         MAJOR = 0
         MINOR = 1
         PATCH = 2
+
+        def __str__(self):
+            return self.name
+
+        @classmethod
+        def from_string(cls, s):
+            try:
+                return cls[s.upper()]
+            except KeyError:
+                raise ValueError()
 
 
 class Lock(UserDict):
@@ -173,14 +188,14 @@ class NoLock(Lock):
 
 def version_travel(
     path: Path,
-    increment_type: str | enum.EnumMeta,
+    increment: str | enum.EnumMeta,
     version_machine: t.Type[VersionMachine] = VersionMachine,
     override_version: str = None,
 ):
     with open(path, "r+") as file_handle:
         text = file_handle.read()
         vm = version_machine(
-            text=text, increment_type=increment_type, force_version=override_version
+            text=text, increment=increment, force_version=override_version
         )
         file_handle.seek(0)
         file_handle.write(vm.future_text)
@@ -225,6 +240,15 @@ def parse_args(args):
         help="path of file to change version in.",
     )
     parser.add_argument(
+        "-i",
+        "--increment",
+        action="store",
+        required=False,
+        default="PATCH",
+        type=VersionMachine.IncrementType.from_string,
+        help="Version part to be incrememnted.",
+    )
+    parser.add_argument(
         "-f",
         "--force",
         action="store_true",
@@ -242,9 +266,17 @@ def parse_args(args):
 
 def cli():
     args = parse_args(sys.argv[1:])
-    if args.path:
-        config = Config({"path": args.path})
-    main(force=args.force, lock=args.lock)
+    cli_conf = {
+        random_name(root="cli_config_"): {
+            a: getattr(args, a) for a in ["path", "increment"] if getattr(args, a)
+        }
+    }
+    if cli_conf:
+        config = Config()
+        config.update(cli_conf)
+    else:
+        config = None
+    main(force=args.force, lock=args.lock, config=config)
 
 
 if __name__ == "__main__":

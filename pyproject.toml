@@ -6,4 +6,8 @@ build-backend = "setuptools.build_meta:__legacy__"
 
     [tool.version_machine.__version__]
     path = "version_machine/__version__.py"
-    increment_type = "patch"
+    increment = "patch"
+
+    [tool.version_machine.example_version]
+    path = "examples/example_version.py"
+    increment = "major"
