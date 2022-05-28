@@ -1,5 +1,4 @@
-from argparse import ArgumentError
-from multiprocessing.sharedctypes import Value
+from io import StringIO
 from pathlib import Path
 from unittest import TestCase, main
 from unittest.mock import MagicMock, patch
@@ -10,8 +9,10 @@ from version_machine.core import VersionMachine, cli, parse_args
 def fake_config(*args, **kwargs):
     return {}
 
+
 def fake_args(*args, **kwargs):
     return parse_args([])
+
 
 MockConfig = MagicMock(side_effect=fake_config)
 MockParseArgs = MagicMock(side_effect=fake_config)
@@ -27,7 +28,9 @@ class TestCLI(TestCase):
         self.assertEqual(args.path, Path(test_path))
         self.assertIsInstance(args.increment, VersionMachine.IncrementType)
         self.assertEqual(args.increment, VersionMachine.IncrementType.MAJOR)
-        self.assertRaises(SystemExit, parse_args, ["-i", "WRONG"])
+
+        with patch("sys.stderr", new_callable=StringIO):
+            self.assertRaises(SystemExit, parse_args, ["-i", "WRONG"])
 
     @patch("version_machine.core.parse_args", mock=MockParseArgs)
     @patch("version_machine.core.main")

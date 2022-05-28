@@ -136,6 +136,13 @@ class VersionMachine:
             type = self.IncrementType[type.upper()]
         return type.value
 
+    @classmethod
+    def increment(cls, name) -> "IncrementType":
+        try:
+            return cls.IncrementType[name.upper()]
+        except KeyError:
+            raise ValueError(f"{name} is not a valid increment type.")
+
     class IncrementType(enum.Enum):
         MAJOR = 0
         MINOR = 1
@@ -143,13 +150,6 @@ class VersionMachine:
 
         def __str__(self):
             return self.name
-
-        @classmethod
-        def from_string(cls, s):
-            try:
-                return cls[s.upper()]
-            except KeyError:
-                raise ValueError()
 
 
 class Lock(UserDict):
@@ -245,7 +245,8 @@ def parse_args(args):
         action="store",
         required=False,
         default="PATCH",
-        type=VersionMachine.IncrementType.from_string,
+        type=VersionMachine.increment,
+        choices=[i for i in VersionMachine.IncrementType],
         help="Version part to be incrememnted.",
     )
     parser.add_argument(
