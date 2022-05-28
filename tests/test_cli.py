@@ -10,8 +10,11 @@ from version_machine.core import VersionMachine, cli, parse_args
 def fake_config(*args, **kwargs):
     return {}
 
+def fake_args(*args, **kwargs):
+    return parse_args([])
 
 MockConfig = MagicMock(side_effect=fake_config)
+MockParseArgs = MagicMock(side_effect=fake_config)
 
 
 class TestCLI(TestCase):
@@ -26,13 +29,14 @@ class TestCLI(TestCase):
         self.assertEqual(args.increment, VersionMachine.IncrementType.MAJOR)
         self.assertRaises(SystemExit, parse_args, ["-i", "WRONG"])
 
+    @patch("version_machine.core.parse_args", mock=MockParseArgs)
     @patch("version_machine.core.main")
     @patch("version_machine.core.Config", mock=MockConfig)
-    def test_cli(self, mock_config, mock_main):
+    def test_cli(self, mock_config, mock_main, mock_parse):
         cli()
         mock_main.assert_called_with(
-            force=False,
-            lock=False,
+            force=mock_parse.return_value.force,
+            lock=mock_parse.return_value.lock,
             config=mock_config(),
         )
 
