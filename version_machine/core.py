@@ -153,8 +153,7 @@ class VersionMachine:
 
 
 class Lock(UserDict):
-    def __init__(self, path: Path | None = None, dict=None, /, **kwargs):
-        super().__init__(dict=dict, **kwargs)
+    def __init__(self, path: Path | None = None):
         self.path = path if path is not None else Path(".version_machine.lock")
         self.current_tag = current_tag()
         if self.path.is_file():
