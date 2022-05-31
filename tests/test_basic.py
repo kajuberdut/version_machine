@@ -1,14 +1,15 @@
 import typing as t
 from pathlib import Path
 from unittest import TestCase, main
-from unittest.mock import ANY, mock_open, patch
+from unittest.mock import ANY, MagicMock, mock_open, patch
 
-from version_machine.core import Lock, version_travel
+from version_machine.core import (Config, Lock, MissingSettingsFile,
+                                  version_travel)
 
 
 class MockOpen:
     return_data: t.ClassVar[str] = "No return_data"
-    
+
     def setUp(self):
         self.mock_open = mock_open(read_data=self.return_data)
         self.patch_file = patch("builtins.open", self.mock_open)
@@ -46,12 +47,20 @@ class TestVersionMachine(MockOpen, TestCase):
         self.mock_open.return_value.write.assert_called_once_with(
             '__version__ = "9.9.9"'
         )
+        
+class TestVersionMachineNoData(MockOpen, TestCase):
+    return_data: t.ClassVar[str] = ''
 
+    def test_basic_override(self):
+        version_travel(path="", increment="PATCH", override_version="9.9.9")
+        self.mock_open.return_value.write.assert_called_once_with(
+            '__version__ = "9.9.9"'
+        )
+        
 
 class TestLocked(MockOpen, TestCase):
-    
+
     return_data: t.ClassVar[str] = '{"versions": {"fake_tag": "1.0.0"}}'
-    
 
     @patch("version_machine.core.json.dump")
     @patch(
@@ -74,6 +83,38 @@ class TestLocked(MockOpen, TestCase):
                 {"versions": {"fake_tag": "1.0.0", "another_tag": "2.0.0"}}, ANY
             )
 
+
+class TestConfig(MockOpen, TestCase):
+    return_data: t.ClassVar[str] = """[tool.version_machine]
+
+    [tool.version_machine.one]
+    path = "things/stuff.py"
+    increment = "patch"
+    
+    [tool.version_machine.two]
+    path = "things/other.py"
+    increment = "Major"
+""".encode("utf-8")
+
+    @patch("version_machine.core.Path")
+    def test_config(self, mock_path_constructor):
+        mock_path = MagicMock()
+        mock_path_constructor.return_value = mock_path
+
+        mock_path.is_file.return_value = True
+
+        config = Config()
+        self.assertEqual(len(config.targets), 2)
+        self.assertEqual(config.targets[1]["increment"], "Major")
+
+        mock_path.is_file.return_value = False
+        self.assertRaises(MissingSettingsFile, Config)
+        
+        new_conf = Config(config={"thing": "stuff"})
+        self.assertEqual(new_conf["thing"], "stuff")
+        self.assertEqual(len(new_conf.targets), 0)
+        new_conf["path"] = "none"
+        self.assertEqual(len(new_conf.targets), 1)
 
 
 if __name__ == "__main__":

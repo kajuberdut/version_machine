@@ -62,9 +62,6 @@ class Config(UserDict):
         with open(pyproject_path, "rb") as pyproject_toml:
             return toml.load(pyproject_toml).get("tool", {}).get("version_machine", {})
 
-    @property
-    def config(self):
-        return self.data
 
     @property
     def targets(self):
@@ -205,13 +202,14 @@ def version_travel(
 def main(
     config: Config | dict | None = None,
     lock: bool = False,
+    lock_path: Path | None = None,
     force: bool = False,
 ):
     check_dirty(warn=force)
     if lock:
-        l = Lock()
+        l = Lock(lock_path)
     else:
-        l = NoLock()
+        l = NoLock(lock_path)
     if l.current_tag in l.data:
         warnings.warn(
             f"HEAD ({l.current_tag}) is locked to version {l[l.current_tag]}."
