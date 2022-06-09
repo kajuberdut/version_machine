@@ -156,6 +156,8 @@ class Lock(UserDict):
         if self.path.is_file():
             with open(self.path, "r") as lf:
                 self.data = json.load(lf)["versions"]
+        else:
+            self.data = {}
 
     def set_version(self, version: str) -> None:
         self.data[self.current_tag] = version

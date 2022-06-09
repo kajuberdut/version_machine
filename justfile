@@ -17,4 +17,4 @@ build_doc:
  python build_readme_examples.py
 
 bump flags="":
- python version_machine.py -L {{flags}}
+ python -m version_machine.core -L {{flags}}
