@@ -175,8 +175,8 @@ class Lock(UserDict):
 
 class NoLock(Lock):
     def __init__(self, *args, **kwargs):
-        super().__init__()
         self.current_tag = None
+        self.data = {}
 
     def lock(self):
         pass
@@ -221,9 +221,8 @@ def main(
     version = None
     for target in config.targets:
         version = version_travel(**target)
-    if lock:
-        l.set_version(version)
-        l.lock()
+    l.set_version(version)
+    l.lock()
 
 
 def parse_args(args):
@@ -273,9 +272,9 @@ def cli():
         config = Config()
         config.update(cli_conf)
     else:
-        config = None
+        config = None   # pragma: no cover
     main(force=args.force, lock=args.lock, config=config)
 
 
 if __name__ == "__main__":
-    cli()
+    cli()  # pragma: no cover
